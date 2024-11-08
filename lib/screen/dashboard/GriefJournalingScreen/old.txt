@@ -1,0 +1,228 @@
+
+
+import 'package:flutter/material.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:soulvoyage/component/constatnt.dart';
+import 'package:soulvoyage/component/dashboardButton.dart';
+import 'package:soulvoyage/helper/GriefJournaling.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
+class GriefJournalingScreen extends StatefulWidget {
+  const GriefJournalingScreen({super.key});
+
+  @override
+  _GriefJournalingScreenState createState() => _GriefJournalingScreenState();
+}
+
+class _GriefJournalingScreenState extends State<GriefJournalingScreen> {
+  final PageController _pageController = PageController(); // Controller for PageView
+  int currentIndex = 0;
+    bool loadingBtn = false;
+   // Controllers for each question
+  final TextEditingController q1 = TextEditingController();
+  final TextEditingController q2 = TextEditingController();
+  final TextEditingController q3 = TextEditingController();
+  final TextEditingController q4 = TextEditingController();
+  final TextEditingController q5 = TextEditingController();
+  final TextEditingController q6 = TextEditingController();
+  final TextEditingController q7 = TextEditingController();
+
+  // List of questions and their respective controllers
+  final List<String> questions = [
+    "1. Remember a trauma and your shock. Describe how you felt.",
+    "2. How did you deny the trauma? Describe how you felt.",
+    "3. Describe your initial reactions to the trauma.",
+    "4. Describe the pain you felt from the trauma.",
+    "5. How did you come to accept the trauma?",
+    "6. Describe the way you said goodbye to the trauma. ",
+    "7. How did you learn to be grateful after the trauma? ",
+  ];
+
+  final List<TextEditingController> ansControllers = [ ];
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the controllers
+    ansControllers.addAll([
+      q1,q2, q3, q4, q5, q6, q7
+    ]);
+  }
+
+   @override
+  void dispose() {
+    // Dispose all controllers
+    for (var controller in ansControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Expanded widget to occupy the free space
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: (index) {
+                  setState(() {
+                    currentIndex = index;
+                  });
+                },
+                itemCount: 7, // Number of pages/containers
+                itemBuilder: (context, index) {
+                  return Questions(
+                    questionText: questions[index], // Pass question text dynamically
+                    ansController: ansControllers[index],
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Page Indicator
+            Center(
+              child: SmoothPageIndicator(
+                controller: _pageController, // PageController
+                count: 7, // Number of dots
+                effect: const ExpandingDotsEffect(
+                  activeDotColor: kButton, // Color for active dot
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  expansionFactor: 4, // Effect of active dot
+                  spacing: 8, // Spacing between dots
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Button at the bottom
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: DashboardButton(
+                name:!loadingBtn?const Text("SUBMIT",style: TextStyle(fontSize: 22),): 
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [Text("LOADING...",style: TextStyle(fontSize: 22),),
+                      SizedBox(width: 10,),
+                       SizedBox(
+                        height: 20, width: 20,
+                        child: CircularProgressIndicator(color: Colors.white,))],),
+                onPressed: () async{
+                  if(q1.text.isEmpty || q2.text.isEmpty || q3.text.isEmpty || q4.text.isEmpty || q5.text.isEmpty || q6.text.isEmpty || q7.text.isEmpty){
+                          Fluttertoast.showToast(
+                          msg: "Please fill all the details",
+                          toastLength: Toast.LENGTH_SHORT,
+                          gravity: ToastGravity.TOP,
+                          backgroundColor: kTextColor,
+                          textColor: Colors.white);
+                  }else{
+                    setState(() {
+                      loadingBtn = true;
+                    });
+                    await Future.delayed(const Duration(seconds: 1));
+                    const String title = "Grief Journaling template";
+                    GriefJournaling(title: title, entry1: q1, entry2: q2, entry3: q3, entry4: q4, entry5: q5, entry6: q6, entry7: q7).griefJournalingEntry();
+                    await Future.delayed(const Duration(seconds: 5));
+                    setState(() {
+                      loadingBtn = false;
+                    });
+                    q1.clear();
+                    q2.clear();
+                    q3.clear();
+                    q4.clear();
+                    q5.clear();
+                    q6.clear();
+                    q7.clear();
+                }
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class Questions extends StatelessWidget {
+  final String questionText;
+  final TextEditingController ansController;
+
+  const Questions({
+    super.key,
+    required this.questionText,
+    required this.ansController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(
+            offset: Offset(1, 1),
+            blurRadius: 10,
+            spreadRadius: 2,
+            color: Colors.black12,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Title Container with expanding text
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              color: kQuestion,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(9),
+                topRight: Radius.circular(9),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Text(
+                questionText,
+                style: const TextStyle(fontSize: 18, color: Colors.white),
+                softWrap: true,
+                overflow: TextOverflow.visible,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // Expanded TextField to take remaining space
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: TextField(
+                controller: ansController,
+                decoration: const InputDecoration(
+                  floatingLabelBehavior: FloatingLabelBehavior.always,
+                  labelText: 'Write here...',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: null, // Make TextField flexible in height
+                expands: true,  // Allows the TextField to take all available space
+                keyboardType: TextInputType.multiline,
+                textAlignVertical: TextAlignVertical.top,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
